@@ -1,25 +1,16 @@
 module Day01 where
 
 import Control.Arrow((&&&))
-import Data.List (sort)
-import Data.Monoid (Sum(..))
-import Data.Bifunctor (bimap)
+import Data.List (sort, transpose)
 
 run01 :: String -> (Int, Int)
-run01 = run01p1 &&& run01p2
+run01 = (run01p1 &&& run01p2) . parseInp01
 
-run01p1 :: String -> Int
-run01p1 = sum
-   . uncurry (zipWith (\x y -> abs (read x - read y)))
-   . bimap sort sort
-   . parseInp
+parseInp01 :: String -> [[Int]]
+parseInp01 = transpose . map (map read . words) . lines
 
-run01p2 :: String -> Int
-run01p2 =
-   (\(xs, ys) -> getSum $ foldMap (\x -> Sum $ read x * length (filter (x==) ys)) xs)
-   . parseInp
+run01p1 :: [[Int]] -> Int
+run01p1 = sum . map (\ x -> abs (head x - last x)) . transpose . map sort
 
-parseInp :: String -> ([String], [String])
-parseInp =
-   (map (head . words) &&& map (last . words))
-   . lines
+run01p2 :: [[Int]] -> Int
+run01p2 ns = sum $ map (\ n -> n * length (filter (n==) (last ns))) (head ns)
