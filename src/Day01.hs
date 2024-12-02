@@ -1,4 +1,4 @@
-module Day01 where
+module Day01(run01, run01p1, run01p2) where
 
 import Control.Arrow((&&&))
 import Data.List (sort, transpose)
