@@ -1,38 +1,37 @@
-module Day03  where
+module Day03 (run03) where
 
 import Control.Arrow ((&&&))
-import Text.Regex.Posix
+import Control.Monad (guard)
 import Data.Char (isDigit)
+import Data.Ix (Ix (inRange))
 
 run03 :: String -> (Int, Int)
-run03 = (runPt1 &&& runPt2)
+run03 = runPt1 &&& runPt2
   where
-    runPt1 = parseInp
-    runPt2 = parseInp . (`onoff` True)
+    runPt1 = search
+    runPt2 = search . donts
 
-parseInp :: String -> Int
-parseInp inp = sum . map ((\(a, b) -> ((read @Int) a * (read @Int) b)) . (takeWhile isDigit &&& (tail . dropWhile isDigit)) . init . drop 4) $ getMatches inp
-
-reg :: String
-reg = "mul\\([0-9]+,[0-p]+\\)"
-
-getMatches :: String -> [String]
-getMatches inp = getAllTextMatches (inp =~ reg :: AllTextMatches [] String)
-
-cdo :: String -> Bool
-cdo (d:o:po:pc:_) | [d,o,po,pc] == "do()" = True
-cdo _ = False
-
-cdont :: String -> Bool
-cdont (d:o:n:ap:t:po:pc:_) | [d,o,n,ap,t,po,pc] == "don't()" = True
-cdont _ = False
-
-onoff :: String -> Bool -> String
-onoff [] _ = []
-onoff t b = if cdo t 
-  then onoff (drop 4 t) True
-  else if cdont t 
-    then onoff (drop 7 t) False
-    else if b 
-      then head t : onoff (tail t) b
-      else onoff (tail t) b
+    search [] = 0
+    search txt@(_ : cs) = case match txt of
+      Just (n1, n2) -> n1 * n2 + search cs
+      Nothing -> search cs
+    donts = donts' True
+    donts' _ [] = []
+    donts' state txt@(c : cs)
+      | take 4 txt == "do()" = donts' True (drop 4 txt)
+      | take 7 txt == "don't()" = donts' False (drop 7 txt)
+      | state = c : donts' state cs
+      | otherwise = donts' state cs
+    match txt = do
+      txt' <- text "mul(" txt
+      (txt'', n1) <- num txt'
+      txt''' <- text "," txt''
+      (txt'''', n2) <- num txt'''
+      _ <- text ")" txt''''
+      return (n1, n2)
+    text str txt = do
+      guard $ take (length str) txt == str
+      return $ drop (length str) txt
+    num txt = do
+      guard $ inRange (1, 3) (length $ takeWhile isDigit txt)
+      return (dropWhile isDigit txt, (read @Int) $ takeWhile isDigit txt)
