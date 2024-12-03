@@ -13,7 +13,10 @@ executable aoc2024
         Test
         Day01
         Day02
+        Day03
 
     default-language: GHC2021
     ghc-options:      -Wall
-    build-depends:    base ^>=4.17.2.1
+    build-depends:
+        base ^>=4.17.2.1,
+        regex-posix ^>=0.96.0.0
