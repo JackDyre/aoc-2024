@@ -1,9 +1,13 @@
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+
+{-# HLINT ignore "Use infix" #-}
 module Day03 (run03) where
 
 import Control.Arrow ((&&&))
 import Control.Monad (guard)
 import Data.Char (isDigit)
 import Data.Ix (Ix (inRange))
+import Data.List (isPrefixOf)
 
 run03 :: String -> (Int, Int)
 run03 = runPt1 &&& runPt2
@@ -12,26 +16,26 @@ run03 = runPt1 &&& runPt2
     runPt2 = search . donts
 
     search [] = 0
-    search txt@(_ : cs) = case match txt of
-      Just (n1, n2) -> n1 * n2 + search cs
-      Nothing -> search cs
+    search xs = maybe (search $ tail xs) ((+) (search $ tail xs) . uncurry (*)) (match xs)
     donts = donts' True
     donts' _ [] = []
     donts' state txt@(c : cs)
-      | take 4 txt == "do()" = donts' True (drop 4 txt)
-      | take 7 txt == "don't()" = donts' False (drop 7 txt)
-      | state = c : donts' state cs
+      | "do()" `isPrefixOf` txt = donts (drop 4 txt)
+      | "don't()" `isPrefixOf` txt = donts' False (drop 7 txt)
+      | state = c : donts cs
       | otherwise = donts' state cs
+    match :: String -> Maybe (Int, Int)
     match txt = do
-      txt' <- text "mul(" txt
-      (txt'', n1) <- num txt'
-      txt''' <- text "," txt''
-      (txt'''', n2) <- num txt'''
-      _ <- text ")" txt''''
+      (txt', n1) <- text "mul(" txt >>= num
+      (txt'', n2) <- text "," txt' >>= num
+      _ <- text ")" txt''
       return (n1, n2)
+    text :: String -> String -> Maybe String
     text str txt = do
-      guard $ take (length str) txt == str
+      guard $ and (zipWith (==) str txt)
       return $ drop (length str) txt
+    num :: String -> Maybe (String, Int)
     num txt = do
-      guard $ inRange (1, 3) (length $ takeWhile isDigit txt)
-      return (dropWhile isDigit txt, (read @Int) $ takeWhile isDigit txt)
+      let (digs, rest) = span isDigit txt
+      guard $ inRange (1, 3) (length digs)
+      return (rest, read @Int digs)
