@@ -1,9 +1,13 @@
 module Main where
 
-import Day01
-import Day02
+import Day01 (run01)
+import Day02 (run02)
+import Test (runTest)
 
 main :: IO ()
-main = do 
-    readFile "inputs/day01.txt" >>= print . run01
-    readFile "inputs/day02.txt" >>= print . run02
+main = do
+  runTest "Day01 Test Case" run01 "inputs/testCaseDay01.txt" (11, 7)
+  runTest "Day01" run01 "inputs/day01.txt" (2904518, 18650129)
+
+  runTest "Day02 Test Case" run02 "inputs/testCaseDay02.txt" (2, 4)
+  runTest "Day02" run02 "inputs/day02.txt" (287, 354)
