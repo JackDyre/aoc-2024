@@ -1,6 +1,3 @@
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-
-{-# HLINT ignore "Use infix" #-}
 module Day03 (run03) where
 
 import Control.Arrow ((&&&))
@@ -16,7 +13,7 @@ run03 = runPt1 &&& runPt2
     runPt2 = search . donts
 
     search [] = 0
-    search xs = maybe (search $ tail xs) ((+) (search $ tail xs) . uncurry (*)) (match xs)
+    search xs = search (tail xs) + maybe 0 (uncurry (*)) (match xs)
     donts = donts' True
     donts' _ [] = []
     donts' state txt@(c : cs)
@@ -24,18 +21,15 @@ run03 = runPt1 &&& runPt2
       | "don't()" `isPrefixOf` txt = donts' False (drop 7 txt)
       | state = c : donts cs
       | otherwise = donts' state cs
-    match :: String -> Maybe (Int, Int)
     match txt = do
-      (txt', n1) <- text "mul(" txt >>= num
-      (txt'', n2) <- text "," txt' >>= num
-      _ <- text ")" txt''
+      (txt', n1) <- textP "mul(" txt >>= numP
+      (txt'', n2) <- textP "," txt' >>= numP
+      _ <- textP ")" txt''
       return (n1, n2)
-    text :: String -> String -> Maybe String
-    text str txt = do
-      guard $ and (zipWith (==) str txt)
-      return $ drop (length str) txt
-    num :: String -> Maybe (String, Int)
-    num txt = do
+    textP str txt =
+      guard (str `isPrefixOf` txt)
+        >> return (drop (length str) txt)
+    numP txt = do
       let (digs, rest) = span isDigit txt
       guard $ inRange (1, 3) (length digs)
       return (rest, read @Int digs)
